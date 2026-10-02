@@ -1236,10 +1236,19 @@ def test_a_fixed_clock_makes_even_the_timing_deterministic():
 
 
 def _script(name, *args, expect=0):
+    import os
+    _env = {"PATH": "/usr/bin:/bin", "PYTHONIOENCODING": "utf-8"}
+    # On Windows also include the real PATH so the subprocess can find Python
+    # extensions (.pyd, DLLs) and Windows system libraries.
+    if sys.platform == "win32":
+        _env["PATH"] = os.environ.get("PATH", _env["PATH"])
+        _env["SYSTEMROOT"] = os.environ.get("SYSTEMROOT", "C:\\Windows")
+        _env["TEMP"] = os.environ.get("TEMP", "C:\\Temp")
+        _env["TMP"] = os.environ.get("TMP", "C:\\Temp")
     proc = subprocess.run(
         [sys.executable, f"scripts/{name}", *args],
-        capture_output=True, text=True, cwd=str(LAB_ROOT),
-        env={"PATH": "/usr/bin:/bin"},
+        capture_output=True, text=True, encoding="utf-8", cwd=str(LAB_ROOT),
+        env=_env,
     )
     assert proc.returncode == expect, (proc.returncode, proc.stdout[-2000:], proc.stderr[-2000:])
     return proc
@@ -1317,10 +1326,17 @@ def test_a_score_file_tagged_baseline_is_used_as_the_baseline(tmp_path):
 def test_run_practice_refuses_the_real_path_without_credentials():
     """No silent fall back to the mock: a scored round that quietly
     stopped being scored is worse than one that failed loudly."""
+    import os
+    _env = {"PATH": "/usr/bin:/bin", "PYTHONIOENCODING": "utf-8"}
+    if sys.platform == "win32":
+        _env["PATH"] = os.environ.get("PATH", _env["PATH"])
+        _env["SYSTEMROOT"] = os.environ.get("SYSTEMROOT", "C:\\Windows")
+        _env["TEMP"] = os.environ.get("TEMP", "C:\\Temp")
+        _env["TMP"] = os.environ.get("TMP", "C:\\Temp")
     proc = subprocess.run(
         [sys.executable, "scripts/run_practice.py", "--model", "real", "--brief",
          "pub-01-sla-hien-hanh"],
-        capture_output=True, text=True, cwd=str(LAB_ROOT), env={"PATH": "/usr/bin:/bin"},
+        capture_output=True, text=True, encoding="utf-8", cwd=str(LAB_ROOT), env=_env,
     )
     assert proc.returncode != 0
     combined = proc.stdout + proc.stderr

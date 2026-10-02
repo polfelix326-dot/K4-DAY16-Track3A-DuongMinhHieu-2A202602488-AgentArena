@@ -50,12 +50,19 @@ trước. Để ĐỌC chỗ dữ liệu đó bằng tiếng người:
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import os
 import statistics
 import sys
 import time
 from pathlib import Path
+
+# Đảm bảo stdout/stderr dùng UTF-8 trên mọi nền tảng (kể cả Windows cp1252).
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 LAB_ROOT = Path(__file__).resolve().parent.parent
 if str(LAB_ROOT) not in sys.path:

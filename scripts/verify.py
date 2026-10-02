@@ -15,11 +15,18 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import io
 import json
 import subprocess
 import sys
 import time
 from pathlib import Path
+
+# Đảm bảo stdout/stderr dùng UTF-8 trên mọi nền tảng (kể cả Windows cp1252).
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 LAB_ROOT = Path(__file__).resolve().parent.parent
 if str(LAB_ROOT) not in sys.path:
@@ -536,7 +543,7 @@ def check_determinism():
     for hashseed in ("0", "12345"):
         proc = subprocess.run(
             [sys.executable, "-c", DETERMINISM_SNIPPET.format(root=str(LAB_ROOT))],
-            capture_output=True, text=True, cwd=str(LAB_ROOT),
+            capture_output=True, text=True, encoding="utf-8", cwd=str(LAB_ROOT),
             env={**_clean_env(), "PYTHONHASHSEED": hashseed},
         )
         if proc.returncode != 0:
@@ -555,7 +562,10 @@ def check_determinism():
 def _clean_env():
     import os
 
-    return {k: v for k, v in os.environ.items() if not k.startswith("ARENA_")}
+    env = {k: v for k, v in os.environ.items() if not k.startswith("ARENA_")}
+    # Đảm bảo subprocess con dùng UTF-8 trên Windows (tránh cp1252 crash tiếng Việt).
+    env["PYTHONIOENCODING"] = "utf-8"
+    return env
 
 
 def check_no_network():
@@ -587,7 +597,7 @@ def check_run_practice():
     proc = subprocess.run(
         [sys.executable, "scripts/run_practice.py", "--quiet", "--brief",
          "pub-01-sla-hien-hanh", "--out", str(out)],
-        capture_output=True, text=True, cwd=str(LAB_ROOT), env=_clean_env(),
+        capture_output=True, text=True, encoding="utf-8", cwd=str(LAB_ROOT), env=_clean_env(),
     )
     if proc.returncode != 0:
         return False, f"thoát {proc.returncode}: {proc.stderr.strip()[-300:]}"
@@ -607,7 +617,7 @@ def check_leaderboard():
     proc = subprocess.run(
         [sys.executable, "scripts/leaderboard.py", str(entry), "--json",
          "--baseline-total", "10"],
-        capture_output=True, text=True, cwd=str(LAB_ROOT), env=_clean_env(),
+        capture_output=True, text=True, encoding="utf-8", cwd=str(LAB_ROOT), env=_clean_env(),
     )
     if proc.returncode != 0:
         return False, f"thoát {proc.returncode}: {proc.stderr.strip()[-300:]}"
@@ -667,7 +677,7 @@ def check_student_layers():
 def check_pytest():
     proc = subprocess.run(
         [sys.executable, "-m", "pytest", "-q"],
-        capture_output=True, text=True, cwd=str(LAB_ROOT), env=_clean_env(),
+        capture_output=True, text=True, encoding="utf-8", cwd=str(LAB_ROOT), env=_clean_env(),
     )
     tail = proc.stdout.strip().splitlines()[-1] if proc.stdout.strip() else ""
     if proc.returncode != 0:
