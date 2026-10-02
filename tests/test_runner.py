@@ -661,11 +661,11 @@ def test_a_gigantic_model_output_still_yields_a_scoreable_run():
 @pytest.mark.parametrize(
     "name,text",
     [
-        ("pseudo-marker prose", "\n".join(["Finally, câu trả lời là 2 ngày."] * 20_000)),
-        ("pseudo-marker braces", "\n".join(["Finally, {gần} đúng 2 ngày."] * 20_000)),
-        ("megabyte of junk", "z" * 1_000_000),
-        ("many real finals", "\n".join(['FINAL: {"answer": "a", "claims": []}'] * 5_000)),
-        ("deep brackets", "FINAL: " + "[" * 2_000 + "]" * 2_000),
+        pytest.param("pseudo-marker prose", "\n".join(["Finally, câu trả lời là 2 ngày."] * 20_000), id="pseudo-marker prose"),
+        pytest.param("pseudo-marker braces", "\n".join(["Finally, {gần} đúng 2 ngày."] * 20_000), id="pseudo-marker braces"),
+        pytest.param("megabyte of junk", "z" * 1_000_000, id="megabyte of junk"),
+        pytest.param("many real finals", "\n".join(['FINAL: {"answer": "a", "claims": []}'] * 5_000), id="many real finals"),
+        pytest.param("deep brackets", "FINAL: " + "[" * 2_000 + "]" * 2_000, id="deep brackets"),
     ],
 )
 def test_normalisation_is_bounded_on_pathological_output(name, text):
